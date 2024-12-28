@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Catch the Square!</title>
+    <title>Dating Ice Breaker!</title>
     <style>
         body {
             margin: 0;
@@ -9,25 +9,66 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background-color: #f0f0f0;
-            font-family: Arial, sans-serif;
+            background-color: #ffe6e6;
+            font-family: 'Arial', sans-serif;
         }
         #gameContainer {
             text-align: center;
         }
         #gameCanvas {
-            border: 2px solid #333;
+            border: 2px solid #ff6b6b;
             background-color: white;
+            border-radius: 10px;
         }
-        #score {
-            font-size: 24px;
+        .score-container {
+            font-size: 20px;
             margin: 10px 0;
+            color: #ff4081;
+            text-align: left;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 10px;
+            max-width: 300px;
+            margin: 10px auto;
+        }
+        #message {
+            font-size: 18px;
+            margin: 10px 0;
+            min-height: 25px;
+            color: #ff4081;
+        }
+        .title {
+            font-size: 32px;
+            color: #ff4081;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .subtitle {
+            color: #ff4081;
+            font-size: 18px;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+        .prompt {
+            font-size: 16px;
+            color: #666;
+            margin-top: 10px;
+            background: white;
+            padding: 8px;
+            border-radius: 5px;
+            display: none;
         }
     </style>
 </head>
 <body>
     <div id="gameContainer">
-        <div id="score">Score: <span id="scoreValue">0</span></div>
+        <div class="title">❤️ First Date Budget Simulator ❤️</div>
+        <div class="subtitle">Warning: Each heart you catch adds $5 to my date budget... play wisely ( please 😅)! 💸</div>
+        <div class="score-container">
+            <div>💝 First Date Budget: $<span id="scoreValue">0</span></div>
+            <div>🎯 Dating Style: <span id="dateStyle">Still saving up...</span></div>
+            <div class="prompt" id="promptText"></div>
+        </div>
         <canvas id="gameCanvas" width="300" height="400"></canvas>
     </div>
 
@@ -35,67 +76,130 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const scoreElement = document.getElementById('scoreValue');
+        const dateStyleElement = document.getElementById('dateStyle');
+        const promptElement = document.getElementById('promptText');
+
+        const dateStyles = [
+            { score: 0, style: "Instant Ramen Romanticism 🍜", prompt: "Pro tip: Say 'I make a mean cup of noodles!' 😋" },
+            { score: 5, style: "Dollar Menu Casanova 🍔", prompt: "Smooth line: 'I'll let you supersize our meal!' 🍟" },
+            { score: 10, style: "Pizza & Chill Expert 🍕", prompt: "Ask: 'Pineapple on pizza? This could make or break us!' 🤔" },
+            { score: 15, style: "Fancy Restaurant Faker 🍷", prompt: "Pro move: 'I totally know how to pronounce these menu items!' 😅" },
+            { score: 20, style: "Trust Fund Baby Dreams 💎", prompt: "Classic line: 'My yacht is getting detailed, mind if we take the helicopter?' 🚁" }
+        ];
+
+        const messages = [
+            "Great catch! 💕",
+            "Budget upgraded! 💰",
+            "Looking fancy! ✨",
+            "Level up! 🎉",
+            "Getting expensive! 💎",
+            "Impressive! 🌟"
+        ];
 
         const player = {
             x: canvas.width / 2,
-            y: canvas.height - 30,
-            width: 50,
-            height: 10,
-            color: '#0066cc',
+            y: canvas.height - 40,
+            width: 80,
+            height: 30,
+            color: '#ff6b6b',
             speed: 5
         };
 
-        const target = {
+        const heart = {
             x: Math.random() * (canvas.width - 20),
             y: 0,
-            width: 20,
-            height: 20,
-            color: '#cc0000',
-            speed: 3
+            size: 20,
+            color: '#ff4081',
+            speed: 2
         };
 
         let score = 0;
         let gameLoop;
-        let touchX = null;
 
-        function drawPlayer() {
-            ctx.fillStyle = player.color;
-            ctx.fillRect(player.x - player.width/2, player.y, player.width, player.height);
+        function updateDateStyle() {
+            const currentLevel = dateStyles.slice().reverse().find(style => score >= style.score);
+            if (currentLevel) {
+                dateStyleElement.textContent = currentLevel.style;
+                promptElement.textContent = currentLevel.prompt;
+                promptElement.style.display = 'block';
+            }
         }
 
-        function drawTarget() {
-            ctx.fillStyle = target.color;
-            ctx.fillRect(target.x, target.y, target.width, target.height);
+        function drawHeart(x, y, size) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(x, y + size / 4);
+            ctx.bezierCurveTo(
+                x, y, 
+                x - size / 2, y, 
+                x - size / 2, y + size / 4
+            );
+            ctx.bezierCurveTo(
+                x - size / 2, y + size / 2, 
+                x, y + size * 3/4, 
+                x, y + size * 3/4
+            );
+            ctx.bezierCurveTo(
+                x, y + size * 3/4, 
+                x + size / 2, y + size / 2, 
+                x + size / 2, y + size / 4
+            );
+            ctx.bezierCurveTo(
+                x + size / 2, y, 
+                x, y, 
+                x, y + size / 4
+            );
+            ctx.fillStyle = heart.color;
+            ctx.fill();
+            ctx.restore();
+        }
+
+        function drawPlayer() {
+            ctx.fillStyle = '#ffffff';
+            ctx.strokeStyle = player.color;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.roundRect(player.x - player.width/2, player.y, player.width, player.height, 5);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(player.x - player.width/4, player.y + player.height/2, 8, 0, Math.PI * 2);
+            ctx.fillStyle = player.color;
+            ctx.fill();
+
+            ctx.fillStyle = player.color;
+            ctx.fillRect(player.x, player.y + 8, player.width/3, 2);
+            ctx.fillRect(player.x, player.y + player.height - 8, player.width/3, 2);
         }
 
         function updateGame() {
-            // Clear canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Move target
-            target.y += target.speed;
+            heart.y += heart.speed;
+            if (score > 10) heart.speed = 3;
+            if (score > 20) heart.speed = 4;
 
-            // Check for collision
-            if (target.y + target.height > player.y &&
-                target.x + target.width > player.x - player.width/2 &&
-                target.x < player.x + player.width/2) {
+            if (heart.y + heart.size > player.y &&
+                heart.x > player.x - player.width/2 &&
+                heart.x < player.x + player.width/2) {
                 score += 1;
-                scoreElement.textContent = score;
-                resetTarget();
+                scoreElement.textContent = (score * 5).toString();
+                updateDateStyle();
+                resetHeart();
             }
 
-            // Check if target is missed
-            if (target.y > canvas.height) {
-                resetTarget();
+            if (heart.y > canvas.height) {
+                resetHeart();
             }
 
             drawPlayer();
-            drawTarget();
+            drawHeart(heart.x, heart.y, heart.size);
         }
 
-        function resetTarget() {
-            target.x = Math.random() * (canvas.width - target.width);
-            target.y = 0;
+        function resetHeart() {
+            heart.x = Math.random() * (canvas.width - heart.size);
+            heart.y = 0;
         }
 
         function handleInput(e) {
@@ -106,14 +210,10 @@
             player.x = Math.max(player.width/2, Math.min(canvas.width - player.width/2, x));
         }
 
-        // Mouse controls
         canvas.addEventListener('mousemove', handleInput);
-
-        // Touch controls
         canvas.addEventListener('touchmove', handleInput);
         canvas.addEventListener('touchstart', handleInput);
 
-        // Start game
         gameLoop = setInterval(updateGame, 1000/60);
     </script>
 </body>
